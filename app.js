@@ -4,20 +4,28 @@ const app = express();
 const userRoutes = require('./routes/user');
 const authRoutes = require('./routes/auth');
 const coachingRoutes = require('./routes/coaching');
+const workoutPlanRoutes = require('./routes/workoutPlans');
+const workoutRoutes = require('./routes/workout');
+
 const sequelize = require('./db/db');
 
 app.use(express.json());
 
 // Routes
 // app.use('/api/v1', userRoutes);
+app.use('/uploads', express.static('uploads'));
+
 app.use('/api/v1', authRoutes);
 app.use('/api/v1', coachingRoutes);
+app.use('/api/v1', workoutPlanRoutes);
+app.use('/api/v1', workoutRoutes);
+
 
 // Test DB Connection
 sequelize.authenticate()
   .then(() => {
     console.log('✅ Database connected...');
-    return sequelize.sync(); // Sync models
+    return sequelize.sync({ alter: true}); // Sync models
   })
   .then(() => {
     console.log('✅ Models synchronized...');
