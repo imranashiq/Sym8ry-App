@@ -5,16 +5,19 @@ const User = require('../models/users');
 
 exports.createWorkoutPlan = async (req, res) => {
   try {
-    const { title, description,coachingId,coachId } = req.body;
-
-    if (!title || !description||!coachId||!coachingId) {
-      return res.status(400).json({ success: false, message: "Title,coachingId,coachId and description are required" });
+    const coachId = req.user.userId
+    console.log(coachId)
+    const { title, description } = req.body;
+    console.log(req.body)
+    if (!title || !description || !coachId) {
+      return res.status(400).json({ success: false, message: "Title,coachId and description are required" });
     }
 
-    const newPlan = await WorkoutPlan.create({ title, description ,coachingId,coachId});
-
+    const newPlan = await WorkoutPlan.create({ title, description, coachId });
+    console.log(newPlan)
     res.status(201).json({ success: true, data: newPlan });
   } catch (error) {
+    console.log(error)
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -32,8 +35,12 @@ exports.getAllWorkoutPlans = async (req, res) => {
       where: whereCondition,
       order: [['createdAt', 'DESC']],
       include: [
-        { model: User,  as: 'coach_details', },
-        { model: Coaching,   as: 'coaching_details',}
+        {
+          model: User,
+          as: 'coach_details',
+          attributes: { exclude: ['password'] }
+        },
+        // { model: Coaching, as: 'coaching_details', }
       ]
     });
 
@@ -47,7 +54,23 @@ exports.getAllWorkoutPlans = async (req, res) => {
 exports.getWorkoutPlanById = async (req, res) => {
   try {
     const { id } = req.params;
-    const plan = await WorkoutPlan.findOne({ where: { id, permanentDeleted: false } });
+    const plan = await WorkoutPlan.findOne({
+  where: {
+    id,
+    permanentDeleted: false
+  },
+  include: [
+    {
+      model: User,
+      as: 'coach_details',
+      attributes: { exclude: ['password'] }
+    },
+    // {
+    //   model: Coaching,
+    //   as: 'coaching_details',
+    // }
+  ]
+});
 
     if (!plan) {
       return res.status(404).json({ success: false, message: "Workout Plan not found" });

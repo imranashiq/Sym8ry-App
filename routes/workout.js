@@ -3,7 +3,7 @@ const router = express.Router();
 const workoutController = require('../controllers/workout');
 const upload = require('../utills/upload');
 
-router.post('/createWorkout', upload.single('video'), workoutController.createWorkout);
+router.post('/createWorkout', upload.any(), workoutController.createWorkout);
 
 router.get('/getAllWorkouts', workoutController.getAllWorkouts);
 

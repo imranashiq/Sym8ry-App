@@ -2,26 +2,72 @@ const Workout = require('../models/workout');
 const WorkoutPlan = require('../models/workoutPlan');
 const { validateRequiredFields } = require("../utills/validateRequiredFields");
 
+// const parseWorkoutsFromBody = (body) => {
+//   const workouts = [];
+//   let i = 0;
+
+//   while (true) {
+//     const key = `workouts[${i}].title`;
+//     if (!(key in body)) break;
+
+//     const workout = {
+//       title: body[`workouts[${i}].title`],
+//       description: body[`workouts[${i}].description`],
+//       muscle: body[`workouts[${i}].muscle`],
+//       sets: body[`workouts[${i}].sets`],
+//       reps: body[`workouts[${i}].reps`],
+//       weight: body[`workouts[${i}].weight`],
+//       rest: body[`workouts[${i}].rest`],
+//       workoutPlanId: body[`workouts[${i}].workoutPlanId`],
+//     };
+
+//     workouts.push(workout);
+//     i++;
+//   }
+
+//   return workouts;
+// };
 
 exports.createWorkout = async (req, res) => {
   try {
-    const {title,description,muscle,sets,reps,weight,workoutPlanId,rest}=req.body
-    const video = req.file?.filename || null;
-     const requiredFields = ["title", "description", "muscle", "sets","reps","weight","workoutPlanId","rest"];
-    const missingFieldMessage = validateRequiredFields(requiredFields, req.body);
-    if (missingFieldMessage) {
-      return res.status(400).json({
-        success: false,
-        message: missingFieldMessage,
-      });
-    }
-    const workout = await Workout.create({ ...req.body, video });
+    const workouts = req.body.workouts; // Expecting { workouts: [ {...}, {...} ] }
+    // const workouts = parseWorkoutsFromBody(req.body);
 
-    res.status(201).json({ success: true, data: workout });
+    const files = req.files || []; // Expecting multiple files if uploaded
+console.log(req.body)
+    if (!Array.isArray(workouts) || workouts.length === 0) {
+      return res.status(400).json({ success: false, message: "No workouts provided." });
+    }
+
+    const requiredFields = ["title", "description", "muscle", "sets", "reps", "weight", "workoutPlanId", "rest"];
+    const createdWorkouts = [];
+
+    for (let i = 0; i < workouts.length; i++) {
+      const workoutData = workouts[i];
+
+      // Validate required fields
+      const missingFieldMessage = validateRequiredFields(requiredFields, workoutData);
+      if (missingFieldMessage) {
+        return res.status(400).json({
+          success: false,
+          message: `Workout ${i + 1}: ${missingFieldMessage}`,
+        });
+      }
+
+      // Attach file if exists (if using Multer's `.fields()` or `.array()`)
+      const video = files[i]?.filename || null;
+
+      const created = await Workout.create({ ...workoutData, video });
+      createdWorkouts.push(created);
+    }
+
+    res.status(201).json({ success: true, data: createdWorkouts });
+
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 exports.getAllWorkouts = async (req, res) => {
   try {

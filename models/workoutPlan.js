@@ -20,7 +20,6 @@ const WorkoutPlan = sequelize.define('WorkoutPlan', {
   },
   coachingId: {
     type: DataTypes.INTEGER,
-    allowNull: false
   },
   permanentDeleted: {
     type: DataTypes.BOOLEAN,
