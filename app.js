@@ -5,7 +5,13 @@ const userRoutes = require('./routes/user');
 const authRoutes = require('./routes/auth');
 const coachingRoutes = require('./routes/coaching');
 const workoutPlanRoutes = require('./routes/workoutPlans');
-const workoutRoutes = require('./routes/workout');
+const workoutRoutes = require('./routes/workout')
+const userWorkoutRoutes = require('./routes/userWorkout');
+const dietPlanRoutes = require('./routes/dietPlans');
+const mealRoutes = require('./routes/meals');
+const userDietRoutes = require('./routes/userDiet');
+
+
 
 const sequelize = require('./db/db');
 
@@ -19,13 +25,23 @@ app.use('/api/v1', authRoutes);
 app.use('/api/v1', coachingRoutes);
 app.use('/api/v1', workoutPlanRoutes);
 app.use('/api/v1', workoutRoutes);
+app.use('/api/v1', userWorkoutRoutes);
+app.use('/api/v1', dietPlanRoutes);
+app.use('/api/v1', mealRoutes);
+app.use('/api/v1', userDietRoutes);
 
 
+
+
+
+//First run with sync({ force: true }) to completely recreate tables
+
+// Then switch to sync({ alter: true }) for incremental changes
 // Test DB Connection
 sequelize.authenticate()
   .then(() => {
     console.log('✅ Database connected...');
-    return sequelize.sync({ alter: true}); // Sync models
+    return sequelize.sync({}); // Sync models
   })
   .then(() => {
     console.log('✅ Models synchronized...');

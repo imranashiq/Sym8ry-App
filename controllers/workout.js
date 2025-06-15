@@ -1,5 +1,8 @@
 const Workout = require('../models/workout');
 const WorkoutPlan = require('../models/workoutPlan');
+const UserWorkout = require('../models/userWorkout');
+const { Op } = require("sequelize"); 
+
 const { validateRequiredFields } = require("../utills/validateRequiredFields");
 
 // const parseWorkoutsFromBody = (body) => {
@@ -69,12 +72,49 @@ console.log(req.body)
 };
 
 
+// exports.getAllWorkouts = async (req, res) => {
+//   try {
+//         const userId = req.user.userId; // Get the authenticated user's ID
+
+//     const { workoutPlanId, muscle } = req.query;
+//     const whereCondition = { permanentDeleted: false };
+    
+//     if (workoutPlanId) whereCondition.workoutPlanId = workoutPlanId;
+//     if (muscle) whereCondition.muscle = muscle;
+
+//     const workouts = await Workout.findAll({
+//       where: whereCondition,
+//       include: [
+//         {
+//           model: WorkoutPlan,
+//           as: 'workout_plan',
+//           attributes: ['id', 'title']
+//         }
+//       ],
+//       order: [['createdAt', 'DESC']]
+//     });
+
+//     res.status(200).json({ success: true, data: workouts });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
 exports.getAllWorkouts = async (req, res) => {
   try {
-    const { workoutPlanId } = req.query;
+    const userId = req.user.userId; // Get the authenticated user's ID
+    const { workoutPlanId, muscle } = req.query;
+    
+    // Get today's date at midnight for comparison
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
     const whereCondition = { permanentDeleted: false };
+    
     if (workoutPlanId) whereCondition.workoutPlanId = workoutPlanId;
+    if (muscle) whereCondition.muscle = muscle;
 
+    // Find all workouts matching the criteria
     const workouts = await Workout.findAll({
       where: whereCondition,
       include: [
@@ -87,7 +127,28 @@ exports.getAllWorkouts = async (req, res) => {
       order: [['createdAt', 'DESC']]
     });
 
-    res.status(200).json({ success: true, data: workouts });
+    // Find all workout completions for this user today
+    const completedWorkouts = await UserWorkout.findAll({
+      where: {
+        userId: userId,
+        date: {
+          [Op.gte]: today, // Greater than or equal to today at midnight
+          [Op.lt]: new Date(today.getTime() + 24 * 60 * 60 * 1000) // Less than tomorrow
+        }
+      },
+      attributes: ['workoutId']
+    });
+
+    // Create a Set of completed workout IDs for quick lookup
+    const completedWorkoutIds = new Set(completedWorkouts.map(w => w.workoutId));
+
+    // Add completed flag to each workout
+    const workoutsWithCompletion = workouts.map(workout => ({
+      ...workout.toJSON(),
+      completed: completedWorkoutIds.has(workout.id)
+    }));
+
+    res.status(200).json({ success: true, data: workoutsWithCompletion });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

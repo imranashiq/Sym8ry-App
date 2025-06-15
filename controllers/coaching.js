@@ -36,6 +36,7 @@ exports.createCoaching = async (req, res) => {
 
 exports.getAllCoachings = async (req, res) => {
   try {
+    const userId = req.user.userId; // Get the authenticated user's ID
     const { coachId } = req.query;
 
     const whereCondition = { permanentDeleted: false };
@@ -55,10 +56,14 @@ exports.getAllCoachings = async (req, res) => {
         ? await User.findAll({ where: { id: coaching.subscriberIds } })
         : [];
 
+      // Check if the current user is subscribed to this coaching
+      const subscribed = coaching.subscriberIds && coaching.subscriberIds.includes(userId);
+
       return {
         ...coaching.toJSON(),
         coachDetails,
         subscribersDetails,
+        subscribed // Add the subscribed flag
       };
     }));
 
