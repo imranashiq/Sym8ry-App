@@ -41,7 +41,7 @@ app.use('/api/v1', userRoutes);
 sequelize.authenticate()
   .then(() => {
     console.log('✅ Database connected...');
-    return sequelize.sync({ alter: true}); // Sync models
+    return sequelize.sync(); // Sync models
   })
   .then(() => {
     console.log('✅ Models synchronized...');
