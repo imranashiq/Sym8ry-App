@@ -23,22 +23,106 @@ exports.getAllUsers = async (req, res) => {
 // READ ONE
 exports.getUserById = async (req, res) => {
   try {
-    const user = await User.findByPk(req.params.id);
+    const { userId } = req.user
+    const user = await User.findByPk(userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
     res.json(user);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
+exports.updateProfile = async (req, res) => {
+  try {
+    const { userId } = req.user;
+    const {
+      firstName,
+      lastName,
+      country,
+      gender,
+      phone,
+      dob,
+      whatsappNumber,
+      address,
+    } = req.body;
 
+    if (req.file) {
+      const profilePicture = "/" + req.file.path;
+      await User.findOneAndUpdate(
+        { _id: userId },
+        {
+          firstName,
+          lastName,
+          // country,
+          gender,
+          phone,
+          dob,
+          whatsappNumber,
+          address,
+          profilePicture,
+        }
+      );
+      const user = await User.findOne({
+        _id: userId,
+        permanentDeleted: false,
+      }).select(
+        "-password -setNewPwd -forgotPasswordOtp -forgotPasswordOtpExpire"
+      );
+      return res.status(200).json({
+        success: true,
+        message: "Profile Updated Successfully",
+        data: user,
+      });
+    } else {
+      await User.findOneAndUpdate(
+        { _id: userId },
+        {
+          firstName,
+          lastName,
+          // country,
+          gender,
+          phone,
+          dob,
+          whatsappNumber,
+          address,
+        }
+      );
+      const user = await User.findOne({
+        _id: userId,
+        permanentDeleted: false,
+      }).select(
+        "-password -setNewPwd -forgotPasswordOtp -forgotPasswordOtpExpire"
+      );
+      return res.status(200).json({
+        success: true,
+        message: "Profile Updated Successfully",
+        data: user,
+      });
+    }
+  } catch (error) {
+    return res.status(400).json({ success: false, message: error.message });
+  }
+};
 // UPDATE
 exports.updateUser = async (req, res) => {
   try {
-    const user = await User.findByPk(req.params.id);
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    const { userId } = req.user;
+    const { fullName } = req.body
+    if (req.file) {
+      const image = "/" + req.file.path;
 
-    await user.update(req.body);
-    res.json(user);
+      const user = await User.findByPk(userId);
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      await user.update({ fullName, image });
+      res.json(user)
+    }
+    else {
+      const user = await User.findByPk(userId);
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      await user.update({ fullName });
+      res.json(user)
+    }
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

@@ -18,7 +18,6 @@ const sequelize = require('./db/db');
 app.use(express.json());
 
 // Routes
-// app.use('/api/v1', userRoutes);
 app.use('/uploads', express.static('uploads'));
 
 app.use('/api/v1', authRoutes);
@@ -29,6 +28,7 @@ app.use('/api/v1', userWorkoutRoutes);
 app.use('/api/v1', dietPlanRoutes);
 app.use('/api/v1', mealRoutes);
 app.use('/api/v1', userDietRoutes);
+app.use('/api/v1', userRoutes);
 
 
 
@@ -41,7 +41,7 @@ app.use('/api/v1', userDietRoutes);
 sequelize.authenticate()
   .then(() => {
     console.log('✅ Database connected...');
-    return sequelize.sync({}); // Sync models
+    return sequelize.sync({ alter: true}); // Sync models
   })
   .then(() => {
     console.log('✅ Models synchronized...');
