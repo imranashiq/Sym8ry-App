@@ -96,6 +96,26 @@ exports.getCoachingById = async (req, res) => {
   }
 };
 
+exports.getSubscribers = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const coaching = await Coaching.findOne({ where: { id, permanentDeleted: false } });
+
+    if (!coaching) {
+      return res.status(404).json({ success: false, message: "Coaching not found" });
+    }
+
+
+    const subscribersDetails = coaching.subscriberIds && coaching.subscriberIds.length > 0
+      ? await User.findAll({ where: { id: coaching.subscriberIds } })
+      : [];
+
+    res.status(200).json({ success: true, data: subscribersDetails  });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 
 exports.updateCoaching = async (req, res) => {
   try {
